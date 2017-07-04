@@ -1,0 +1,2 @@
+# Emerald
+Simple C# Library
