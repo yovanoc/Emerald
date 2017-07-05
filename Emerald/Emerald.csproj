@@ -5,8 +5,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Core\" />
-    <Folder Include="Net\TCP\Client\" />
+    <Compile Remove="Net\TCP\Client\**" />
+    <EmbeddedResource Remove="Net\TCP\Client\**" />
+    <None Remove="Net\TCP\Client\**" />
   </ItemGroup>
 
 </Project>

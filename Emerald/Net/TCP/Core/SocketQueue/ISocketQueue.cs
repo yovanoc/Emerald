@@ -1,12 +1,12 @@
 ﻿using System.Net.Sockets;
 
-namespace Emerald.Net.TCP.Core.SocketPool
+namespace Emerald.Net.TCP.Core.SocketQueue
 {
     /**
      * <summary>  Stores SocketAsyncEventArgs, and provides methods to handle them.
      * </summary>
      */
-    internal interface ISocketPool
+    internal interface ISocketQueue
     {
         #region Methods
 

@@ -6,11 +6,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Emerald\Emerald.csproj" />
+    <Compile Remove="Net\TCP\Core\**" />
+    <EmbeddedResource Remove="Net\TCP\Core\**" />
+    <None Remove="Net\TCP\Core\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Net\TCP\Core\" />
+    <ProjectReference Include="..\Emerald\Emerald.csproj" />
   </ItemGroup>
 
 </Project>

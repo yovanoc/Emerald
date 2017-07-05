@@ -2,9 +2,9 @@
 using System.Collections.Concurrent;
 using System.Net.Sockets;
 
-namespace Emerald.Net.TCP.Core.SocketPool
+namespace Emerald.Net.TCP.Core.SocketQueue
 {
-    public class SocketPool : ISocketPool
+    public class SocketQueue : ISocketQueue
     {
         # region Members
 
@@ -23,13 +23,13 @@ namespace Emerald.Net.TCP.Core.SocketPool
          * <param name="capacity"> The max socket capacity, leave blank if infinite
          * </param>
          */
-        public SocketPool(int capacity)
+        public SocketQueue(int capacity)
         {
             _socketQueue = new ConcurrentQueue<SocketAsyncEventArgs>();
             _queueCapacity = capacity;
         }
 
-        public SocketPool() : this(-1)
+        public SocketQueue() : this(-1)
         {
         }
 
@@ -41,7 +41,7 @@ namespace Emerald.Net.TCP.Core.SocketPool
         {
             if (socket == null)
                 throw new ArgumentNullException(nameof(socket), "A null item cannot be" +
-                                                          "added in the socket pool !");
+                                                                "added in the socket pool !");
 
             if (Queued >= _queueCapacity && _queueCapacity != -1) return false;
             _socketQueue.Enqueue(socket);
@@ -51,12 +51,7 @@ namespace Emerald.Net.TCP.Core.SocketPool
         public SocketAsyncEventArgs Pop()
         {
             if (_socketQueue.Count < 0) return null;
-
-            SocketAsyncEventArgs socket;
-
-            if (!_socketQueue.TryDequeue(out socket))
-                return null;
-            return socket;
+            return !_socketQueue.TryDequeue(out SocketAsyncEventArgs socket) ? null : socket;
         }
 
         public void Clear()

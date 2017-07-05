@@ -1,21 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net;
-using System.Text;
+﻿using System.Net;
+using System.Net.Sockets;
 using System.Threading.Tasks;
 
-namespace Emerald.Net.TCP.Core
+namespace Emerald.Net.TCP.Core.BaseSocket
 {
-
     /** <summary> The socket super-class that contains primitive methods for both client and server. </summary> */
-    public class BaseSocket : System.Net.Sockets.Socket
+    public class BaseSocket : Socket
     {
         # region Constructor
 
-
-        public BaseSocket () : base(System.Net.Sockets.AddressFamily.InterNetwork, System.Net.Sockets.SocketType.Stream,
-            System.Net.Sockets.ProtocolType.Tcp)
-        { }
+        public BaseSocket() : base(AddressFamily.InterNetwork, SocketType.Stream,
+            ProtocolType.Tcp)
+        {
+        }
 
         #endregion Constructor
 
@@ -31,11 +28,11 @@ namespace Emerald.Net.TCP.Core
          */
         protected async Task<IPEndPoint> BuildEndPoint(string host, int port)
         {
-            IPAddress[] ips = await Dns.GetHostAddressesAsync(host);
+            var ips = await Dns.GetHostAddressesAsync(host);
             IPAddress ipv4 = null;
 
             foreach (var ip in ips)
-                if (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork) ipv4 = ip; 
+                if (ip.AddressFamily == AddressFamily.InterNetwork) ipv4 = ip;
 
             return new IPEndPoint(ipv4, port);
         }
