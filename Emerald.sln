@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26430.13
+VisualStudioVersion = 15.0.26430.14
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Emerald", "Emerald\Emerald.csproj", "{312DA895-70E9-4278-A559-DDB4CA4FB270}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Emerald", "Emerald\Emerald.csproj", "{312DA895-70E9-4278-A559-DDB4CA4FB270}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Emerald.Tests", "Emerald.Tests\Emerald.Tests.csproj", "{52135F83-F4A9-49F7-BB4B-04C202B59586}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Emerald.Tests", "Emerald.Tests\Emerald.Tests.csproj", "{52135F83-F4A9-49F7-BB4B-04C202B59586}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Emerald.Examples", "Emerald.Examples\Emerald.Examples.csproj", "{24A54762-03EA-4EEF-8DDE-64B2877ABFF2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{52135F83-F4A9-49F7-BB4B-04C202B59586}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{52135F83-F4A9-49F7-BB4B-04C202B59586}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{52135F83-F4A9-49F7-BB4B-04C202B59586}.Release|Any CPU.Build.0 = Release|Any CPU
+		{24A54762-03EA-4EEF-8DDE-64B2877ABFF2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{24A54762-03EA-4EEF-8DDE-64B2877ABFF2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{24A54762-03EA-4EEF-8DDE-64B2877ABFF2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{24A54762-03EA-4EEF-8DDE-64B2877ABFF2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

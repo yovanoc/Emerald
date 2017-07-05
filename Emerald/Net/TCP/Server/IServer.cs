@@ -2,5 +2,6 @@
 {
     internal interface IServer
     {
+        void Listen(int port);
     }
 }
