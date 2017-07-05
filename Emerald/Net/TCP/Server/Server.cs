@@ -1,6 +1,7 @@
 ﻿using System.Threading;
 using Emerald.Net.TCP.Core.BaseSocket;
 using Emerald.Net.TCP.Core.SocketQueue;
+using System.Net.Sockets;
 
 namespace Emerald.Net.TCP.Server
 {
@@ -8,6 +9,35 @@ namespace Emerald.Net.TCP.Server
     {
         # region Methods
 
+        /** <summary> Fill the SocketQueue of SocketAsyncEventArgs up to his max capacity. </summary> */
+        private void FillSocketQueue()
+        {
+            for (var i = 0; i < _socketQueue.Capacity; i++)
+                _socketQueue.Push(CreateSocket());
+        }
+
+        /**
+         * <summary> Creates and set a new SocketAsyncEventArgs instance. </summary>
+         * <returns> The created instance. </returns>
+         */
+        private SocketAsyncEventArgs CreateSocket()
+        {
+            var socket = new SocketAsyncEventArgs();
+            socket.Completed += OnSocketOperationCompleted;
+            socket.SetBuffer(CreateBuffer(), 0, BufferSize);
+
+            return socket;
+        }
+
+        private static void OnSocketOperationCompleted(object sender, SocketAsyncEventArgs e)
+        {
+            // TODO
+        }
+
+        /**
+         * <summary> Make the server listen to new connections. </summary>
+         * <param name="port"> The listening port. </param>
+         */
         public new async void Listen(int port)
         {
             // Create a new local end point and listen.
@@ -55,6 +85,8 @@ namespace Emerald.Net.TCP.Server
             _maxConnectedSockets = maxConnectedSockets;
             _listenerMutex = new Mutex();
             _socketQueue = new SocketQueue(maxQueuedSockets);
+
+            FillSocketQueue();
         }
 
         public Server(int maxConnectedSockets) : this(maxConnectedSockets, 501)

@@ -16,7 +16,14 @@ namespace Emerald.Net.TCP.Core.BaseSocket
 
         #endregion Constructor
 
-        # region Methods
+        # region Members
+
+        /** <summary> Size of the buffer, 8k is a good size to go </summary> */
+        protected const int BufferSize = 8000;
+
+        # endregion Members
+
+        #region Methods
 
         /**
          * <summary>    Builds an socket end point. </summary>
@@ -36,6 +43,12 @@ namespace Emerald.Net.TCP.Core.BaseSocket
 
             return new IPEndPoint(ipv4, port);
         }
+
+        /**
+         * <summary> A method to concisely create a new buffer. </summary>
+         * <returns> The new buffer. </returns>
+         */
+        protected byte[] CreateBuffer () => new byte[BufferSize];
 
         # endregion Methods
     }

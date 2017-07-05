@@ -13,9 +13,7 @@ namespace Emerald.Examples.Net.TCP.Server
 
             server.Listen(80);
 
-            while (Console.ReadLine() != "q")
-            {
-            }
+            while (Console.ReadLine() != "q") { /* Stay open. */ }
         }
 
         private static void OnListening(Emerald.Net.TCP.Server.Server server)
