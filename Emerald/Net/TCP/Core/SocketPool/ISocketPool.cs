@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net.Sockets;
-using System.Text;
+﻿using System.Net.Sockets;
 
 namespace Emerald.Net.TCP.Core.SocketPool
 {
@@ -9,7 +6,7 @@ namespace Emerald.Net.TCP.Core.SocketPool
      * <summary>  Stores SocketAsyncEventArgs, and provides methods to handle them.
      * </summary>
      */
-    interface ISocketPool
+    internal interface ISocketPool
     {
         #region Methods
 
@@ -20,16 +17,16 @@ namespace Emerald.Net.TCP.Core.SocketPool
          * <param name="socket"> The socket to push. </param>
          * <returns> True if it succeeds, false if it fails. </returns>
          */
-        bool Push (SocketAsyncEventArgs socket);
+        bool Push(SocketAsyncEventArgs socket);
 
         /**
          * <summary> Removes and returns the top-of-stack socket. </summary>
          * <returns> The previous top-of-stack socket. </returns>
          */
-        SocketAsyncEventArgs Pop ();
+        SocketAsyncEventArgs Pop();
 
         /** <summary> Clears the queue to its blank/initial state. </summary> */
-        void Clear ();
+        void Clear();
 
         # endregion Methods
     }

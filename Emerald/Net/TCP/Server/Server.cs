@@ -1,25 +1,20 @@
-﻿using Emerald.Net.TCP.Core.SocketPool;
-using System.Threading;
+﻿using System.Threading;
+using Emerald.Net.TCP.Core.SocketPool;
 
 namespace Emerald.Net.TCP.Server
 {
-    class Server : IServer
+    internal class Server : IServer
     {
         #region Members
 
         private const int MaxQueueConnections = 501;
 
-        private static Mutex ListenerMutex;
+        private static Mutex _listenerMutex;
 
         public int ConnectedClients;
 
-        private SocketPool SocketPool;
+        private SocketPool _socketPool;
 
         #endregion Members
-
-
-        public Server ()
-        {
-        }
     }
 }
