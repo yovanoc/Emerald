@@ -64,9 +64,10 @@ namespace Emerald.Net.TCP.Server
         # endregion Events
 
         #region Members
-
-        private readonly int _maxConnectedSockets;
-
+        
+        /** <summary> The maximum connections waiting for being accepted. </summary> */
+        private readonly int _maxQueuedConnections;
+        private readonly int _maxConnectedSockets; 
 
         /** <summary> Keep the Listen method under one thread. </summary> */
         private static Mutex _listenerMutex;
@@ -80,11 +81,12 @@ namespace Emerald.Net.TCP.Server
 
         # region Constructor
 
-        public Server(int maxConnectedSockets, int maxQueuedSockets)
+        public Server(int maxConnectedSockets, int maxQueuedConnections)
         {
+            _maxQueuedConnections = maxQueuedConnections;
             _maxConnectedSockets = maxConnectedSockets;
             _listenerMutex = new Mutex();
-            _socketQueue = new SocketQueue(maxQueuedSockets);
+            _socketQueue = new SocketQueue(maxQueuedConnections);
 
             FillSocketQueue();
         }
