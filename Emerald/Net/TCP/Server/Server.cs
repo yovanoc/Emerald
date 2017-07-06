@@ -85,7 +85,7 @@ namespace Emerald.Net.TCP.Server
             // Grab the socket from the async event arg.
             var acceptSocket = acceptArg.AcceptSocket;
 
-            // Check that the connection is good to go.
+            // Check if there is a client
             if (!acceptSocket.Connected) return;
 
             var readSocket = _socketQueue.Pop();
@@ -96,6 +96,9 @@ namespace Emerald.Net.TCP.Server
 
             readSocket.UserToken = new UserToken(owner: acceptSocket);
             var isIOPending = acceptSocket.ReceiveAsync(readSocket);
+
+            // Fire the client connected event
+            ClientConnected?.Invoke(acceptSocket);
 
             // If no data is being sent and/or everything was intercepted, we "extract" the data.
             // Otherwise, 
@@ -109,33 +112,53 @@ namespace Emerald.Net.TCP.Server
 
         private void ProcessReceive(SocketAsyncEventArgs readSocket)
         {
+            var token = readSocket.UserToken as UserToken;
             var bytecount = readSocket.BytesTransferred;
+
             if (bytecount > 0 || readSocket.SocketError == SocketError.Success)
             {
-                Console.WriteLine(Encoding.ASCII.GetString(readSocket.Buffer, readSocket.Offset, bytecount));
+                byte[] data = new byte[bytecount];
+                Buffer.BlockCopy(readSocket.Buffer, readSocket.Offset, data, 0, bytecount);
+
+                DataReceived?.Invoke(token.OwnerSocket, data);
             }
 
-            var token = readSocket.UserToken as UserToken;
             var isIOPending = token.OwnerSocket.ReceiveAsync(readSocket);
             if (!isIOPending) ProcessReceive(readSocket);
         }
-
-
-
 
         # endregion Methods
 
         # region Events
 
-        /** <summary> Fired when server starts listening </summary> */
+        /**
+         * <summary> Delegate for handling Listening events. </summary>
+         * <param name="server"> The listening server. </param>
+         */
         public delegate void ListeningEventHandler(Server server);
+        /**
+         * <summary> Delegate for handling ClientConnected events. </summary>
+         * <param name="client"> The client. </param>
+         */
+        public delegate void ClientConnectedEventHandler(Socket client);
+        /**
+         * <summary> Delegate for handling DataReceived events. </summary>
+         * <param name="client"> The data sender. </param>
+         * <param name="data"> The received data. </param>
+         */
+        public delegate void DataReceivedEventHandler(Socket client, byte[] data);
 
+        /** <summary> Fired when server starts listening. </summary> */
         public event ListeningEventHandler Listening;
+        /** <summary> Fired when a new client connects. </summary> */
+        public event ClientConnectedEventHandler ClientConnected;
+        /** <summary> Fired when server receives data. </summary> */
+        public event DataReceivedEventHandler DataReceived;
 
-        # endregion Events
+        #endregion Events
 
         #region Members
-        
+
         /** <summary> The maximum connections waiting for being accepted. </summary> */
         private readonly int _maxQueuedConnections;
         private readonly int _maxConnectedSockets; 
