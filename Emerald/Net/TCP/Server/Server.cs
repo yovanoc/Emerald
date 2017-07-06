@@ -75,7 +75,7 @@ namespace Emerald.Net.TCP.Server
         public int ConnectedClients;
 
         /** <summary> Contains several pre created SocketAsyncEventArgs instances </summary> */
-        private SocketQueue _socketQueue;
+        private readonly SocketQueue _socketQueue;
 
         # endregion Members
 

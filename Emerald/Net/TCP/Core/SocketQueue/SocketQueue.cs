@@ -10,9 +10,9 @@ namespace Emerald.Net.TCP.Core.SocketQueue
 
         /** <summary> The object that queues sockets. </summary> */
         private readonly ConcurrentQueue<SocketAsyncEventArgs> _socketQueue;
-        private readonly int _queueCapacity;
 
-        public int Capacity => _queueCapacity;
+        public int Capacity { get; }
+
         public int Queued => _socketQueue.Count;
 
         # endregion Members
@@ -27,7 +27,7 @@ namespace Emerald.Net.TCP.Core.SocketQueue
         public SocketQueue(int capacity)
         {
             _socketQueue = new ConcurrentQueue<SocketAsyncEventArgs>();
-            _queueCapacity = capacity;
+            Capacity = capacity;
         }
 
         public SocketQueue() : this(-1)
@@ -44,7 +44,7 @@ namespace Emerald.Net.TCP.Core.SocketQueue
                 throw new ArgumentNullException(nameof(socket), "A null item cannot be" +
                                                                 "added in the socket pool !");
 
-            if (Queued >= _queueCapacity && _queueCapacity != -1) return false;
+            if (Queued >= Capacity && Capacity != -1) return false;
             _socketQueue.Enqueue(socket);
             return true;
         }
