@@ -3,10 +3,12 @@ using Emerald.Net.TCP.Core.BaseSocket;
 using Emerald.Net.TCP.Core.SocketQueue;
 using System.Net.Sockets;
 using System.Threading.Tasks;
+using System;
+using System.Text;
 
 namespace Emerald.Net.TCP.Server
 {
-    public class Server : BaseSocket, IServer
+    public sealed class Server : BaseSocket, IServer
     {
         # region Methods
 
@@ -14,7 +16,7 @@ namespace Emerald.Net.TCP.Server
         private async void FillSocketQueue()
         {
             for (var i = 0; i < _socketQueue.Capacity; i++)
-                _socketQueue.Push(await CreateSocket());
+                _socketQueue.Push(await CreateReadSocket());
         }
 
         /**
@@ -22,21 +24,16 @@ namespace Emerald.Net.TCP.Server
          *           times, better run it asynchronously. </summary>
          * <returns> The created instance. </returns>
          */
-        private async Task<SocketAsyncEventArgs> CreateSocket()
+        private async Task<SocketAsyncEventArgs> CreateReadSocket()
         {
             return await Task.Run(() =>
             {
                 var socket = new SocketAsyncEventArgs();
-                socket.Completed += OnSocketOperationCompleted;
+                socket.Completed += OnIOComplete;
                 socket.SetBuffer(CreateBuffer(), 0, BufferSize);
 
                 return socket;
             });
-        }
-
-        private static void OnSocketOperationCompleted(object sender, SocketAsyncEventArgs e)
-        {
-            // TODO
         }
 
         /**
@@ -45,17 +42,86 @@ namespace Emerald.Net.TCP.Server
          */
         public new async void Listen(int port)
         {
-            // Create a new local end point and listen.
+            // Create a new local end point and listen; ('this' is the listening socket).
             var endPoint = await BuildEndPoint("localhost", port);
             Bind(endPoint);
             base.Listen(_maxConnectedSockets);
 
-            // Let the mutex block the function to one thread.
-            _listenerMutex.WaitOne();
-
             // Fire the listening event.
             Listening?.Invoke(this);
+
+            // Accept new incoming connections.
+            Accept(CreateAcceptSocket());
+
+            // Let the mutex block the function to one thread.
+            _listenerMutex.WaitOne();
         }
+
+        private SocketAsyncEventArgs CreateAcceptSocket()
+        {
+            var socket = new SocketAsyncEventArgs();
+            socket.Completed += OnAcceptCompleted;
+
+            return socket;
+        }
+
+        private void Accept (SocketAsyncEventArgs acceptArg)
+        {
+            // As Accept() is called by ProcessAccept() when data processing is done, making a sort of
+            // infinite loop we need to clear the old accept socket who contains the old connection.
+            acceptArg.AcceptSocket = null;
+
+            var isAcceptPending = AcceptAsync(acceptArg);
+
+            // If the connection is accepted yet, everything is fine let's finish the process.
+            // Otherwise, the process will be finished by the socket's Completed callback.
+            if (!isAcceptPending) ProcessAccept(acceptArg);
+        }
+
+        private void OnAcceptCompleted(object sender, SocketAsyncEventArgs acceptArg) => ProcessAccept(acceptArg);
+
+        private void ProcessAccept(SocketAsyncEventArgs acceptArg)
+        {
+            // Grab the socket from the async event arg.
+            var acceptSocket = acceptArg.AcceptSocket;
+
+            // Check that the connection is good to go.
+            if (!acceptSocket.Connected) return;
+
+            var readSocket = _socketQueue.Pop();
+
+            // If every socket in the SocketQueue is used, we can't host more clients.
+            // TODO: Check if the client will make a new request after a certain time.
+            if (readSocket == null) return;
+
+            readSocket.UserToken = new UserToken(owner: acceptSocket);
+            var isIOPending = acceptSocket.ReceiveAsync(readSocket);
+
+            // If no data is being sent and/or everything was intercepted, we "extract" the data.
+            // Otherwise, 
+            if (!isIOPending) ProcessReceive(readSocket);
+
+            // And loop to accept new connections.
+            Accept(acceptArg);
+        }
+
+        private void OnIOComplete(object sender, SocketAsyncEventArgs readSocket) => ProcessReceive(readSocket);
+
+        private void ProcessReceive(SocketAsyncEventArgs readSocket)
+        {
+            var bytecount = readSocket.BytesTransferred;
+            if (bytecount > 0 || readSocket.SocketError == SocketError.Success)
+            {
+                Console.WriteLine(Encoding.ASCII.GetString(readSocket.Buffer, readSocket.Offset, bytecount));
+            }
+
+            var token = readSocket.UserToken as UserToken;
+            var isIOPending = token.OwnerSocket.ReceiveAsync(readSocket);
+            if (!isIOPending) ProcessReceive(readSocket);
+        }
+
+
+
 
         # endregion Methods
 
