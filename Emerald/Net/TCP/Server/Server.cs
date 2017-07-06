@@ -2,6 +2,7 @@
 using Emerald.Net.TCP.Core.BaseSocket;
 using Emerald.Net.TCP.Core.SocketQueue;
 using System.Net.Sockets;
+using System.Threading.Tasks;
 
 namespace Emerald.Net.TCP.Server
 {
@@ -9,24 +10,28 @@ namespace Emerald.Net.TCP.Server
     {
         # region Methods
 
-        /** <summary> Fill the SocketQueue of SocketAsyncEventArgs up to his max capacity. </summary> */
-        private void FillSocketQueue()
+        /** <summary> Fill the SocketQueue of SocketAsyncEventArgs up to his max capacity </summary> */
+        private async void FillSocketQueue()
         {
             for (var i = 0; i < _socketQueue.Capacity; i++)
-                _socketQueue.Push(CreateSocket());
+                _socketQueue.Push(await CreateSocket());
         }
 
         /**
-         * <summary> Creates and set a new SocketAsyncEventArgs instance. </summary>
+         * <summary> Creates and set a new SocketAsyncEventArgs instance. As this method might be called several
+         *           times, better run it asynchronously. </summary>
          * <returns> The created instance. </returns>
          */
-        private SocketAsyncEventArgs CreateSocket()
+        private async Task<SocketAsyncEventArgs> CreateSocket()
         {
-            var socket = new SocketAsyncEventArgs();
-            socket.Completed += OnSocketOperationCompleted;
-            socket.SetBuffer(CreateBuffer(), 0, BufferSize);
+            return await Task.Run(() =>
+            {
+                var socket = new SocketAsyncEventArgs();
+                socket.Completed += OnSocketOperationCompleted;
+                socket.SetBuffer(CreateBuffer(), 0, BufferSize);
 
-            return socket;
+                return socket;
+            });
         }
 
         private static void OnSocketOperationCompleted(object sender, SocketAsyncEventArgs e)
