@@ -51,13 +51,13 @@ namespace Emerald.Net.TCP.Server
             Listening?.Invoke(this);
 
             // Accept new incoming connections.
-            Accept(CreateAcceptSocket());
+            Accept(CreateAcceptSocketArgs());
 
             // Let the mutex block the function to one thread.
             _listenerMutex.WaitOne();
         }
 
-        private SocketAsyncEventArgs CreateAcceptSocket()
+        private SocketAsyncEventArgs CreateAcceptSocketArgs()
         {
             var socket = new SocketAsyncEventArgs();
             socket.Completed += OnAcceptCompleted;
@@ -65,66 +65,69 @@ namespace Emerald.Net.TCP.Server
             return socket;
         }
 
-        private void Accept (SocketAsyncEventArgs acceptArg)
+        private void Accept (SocketAsyncEventArgs acceptArgs)
         {
             // As Accept() is called by ProcessAccept() when data processing is done, making a sort of
             // infinite loop we need to clear the old accept socket who contains the old connection.
-            acceptArg.AcceptSocket = null;
+            acceptArgs.AcceptSocket = null;
 
-            var isAcceptPending = AcceptAsync(acceptArg);
+            var isAcceptPending = AcceptAsync(acceptArgs);
 
             // If the connection is accepted yet, everything is fine let's finish the process.
-            // Otherwise, the process will be finished by the socket's Completed callback.
-            if (!isAcceptPending) ProcessAccept(acceptArg);
+            // Otherwise, the process may be slow, or no other connections are made, the process will be finished by the socket's Completed callback.
+            if (!isAcceptPending) ProcessAccept(acceptArgs);
         }
 
-        private void OnAcceptCompleted(object sender, SocketAsyncEventArgs acceptArg) => ProcessAccept(acceptArg);
+        private void OnAcceptCompleted(object sender, SocketAsyncEventArgs acceptArgs) => ProcessAccept(acceptArgs);
 
-        private void ProcessAccept(SocketAsyncEventArgs acceptArg)
+        private void ProcessAccept(SocketAsyncEventArgs acceptArgs)
         {
             // Grab the socket from the async event arg.
-            var acceptSocket = acceptArg.AcceptSocket;
-
+            var acceptSocket = acceptArgs.AcceptSocket;
+            
             // Check if there is a client
             if (!acceptSocket.Connected) return;
-
-            var readSocket = _socketQueue.Pop();
+            var readSocketArg = _socketQueue.Pop();
 
             // If every socket in the SocketQueue is used, we can't host more clients.
             // TODO: Check if the client will make a new request after a certain time.
-            if (readSocket == null) return;
-
-            readSocket.UserToken = new UserToken(owner: acceptSocket);
-            var isIOPending = acceptSocket.ReceiveAsync(readSocket);
+            if (readSocketArg == null) return;
 
             // Fire the client connected event
             ClientConnected?.Invoke(acceptSocket);
 
+            readSocketArg.UserToken = new UserToken(owner: acceptSocket);
+            var isIOPending = acceptSocket.ReceiveAsync(readSocketArg);
+
             // If no data is being sent and/or everything was intercepted, we "extract" the data.
             // Otherwise, 
-            if (!isIOPending) ProcessReceive(readSocket);
+            if (!isIOPending) ProcessReceive(readSocketArg);
 
             // And loop to accept new connections.
-            Accept(acceptArg);
+            Accept(acceptArgs);
         }
 
-        private void OnIOComplete(object sender, SocketAsyncEventArgs readSocket) => ProcessReceive(readSocket);
+        private void OnIOComplete(object sender, SocketAsyncEventArgs readSocketArgs) => ProcessReceive(readSocketArgs);
 
-        private void ProcessReceive(SocketAsyncEventArgs readSocket)
+        /**
+         * <summary> Called when the data is read, we just copy the buffer from the socketArgs, and send it to event. </summary>
+         * <param name="readSocketArgs"> Where the data was received. </param>
+         */
+        private void ProcessReceive(SocketAsyncEventArgs readSocketArgs)
         {
-            var token = readSocket.UserToken as UserToken;
-            var bytecount = readSocket.BytesTransferred;
+            var token = readSocketArgs.UserToken as UserToken;
+            var bytecount = readSocketArgs.BytesTransferred;
 
-            if (bytecount > 0 || readSocket.SocketError == SocketError.Success)
+            if (bytecount > 0 || readSocketArgs.SocketError == SocketError.Success)
             {
                 byte[] data = new byte[bytecount];
-                Buffer.BlockCopy(readSocket.Buffer, readSocket.Offset, data, 0, bytecount);
+                Buffer.BlockCopy(readSocketArgs.Buffer, readSocketArgs.Offset, data, 0, bytecount);
 
                 DataReceived?.Invoke(token.OwnerSocket, data);
             }
 
-            var isIOPending = token.OwnerSocket.ReceiveAsync(readSocket);
-            if (!isIOPending) ProcessReceive(readSocket);
+            var isIOPending = token.OwnerSocket.ReceiveAsync(readSocketArgs);
+            if (!isIOPending) ProcessReceive(readSocketArgs);
         }
 
         # endregion Methods
