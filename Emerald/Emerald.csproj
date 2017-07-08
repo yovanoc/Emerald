@@ -5,9 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Net\TCP\Client\**" />
-    <EmbeddedResource Remove="Net\TCP\Client\**" />
-    <None Remove="Net\TCP\Client\**" />
+    <Folder Include="Client\TCP\" />
   </ItemGroup>
 
 </Project>
