@@ -11,10 +11,7 @@ namespace Emerald.Net.TCP.Client
     {
         #region Fields
 
-        private IPEndPoint _endPoint;
-        private Socket _socket;
         protected byte[] ReceiveBuffer;
-        private SocketAsyncEventArgs _receivedEvent;
         private SocketAsyncEventArgs _sentEvent;
         protected object Sender;
 
@@ -22,16 +19,19 @@ namespace Emerald.Net.TCP.Client
 
         #region Properties
 
-        new public bool Connected => _socket != null && _socket.Connected && _socket.IsConnected();
+        new public bool Connected => base.Connected && this.IsConnected();
 
         #endregion
 
         #region Events
 
-        public delegate void DataReceivedEventHandler (byte[] data);
+        public delegate void ConnectedEventHandler (Client instance);
+        public event ConnectedEventHandler ConnectedEvent;
+
+        public delegate void DataReceivedEventHandler (Client instance, byte[] data);
         public event DataReceivedEventHandler DataReceived;
 
-        public delegate void DataSentEventHandler (byte[] data);
+        public delegate void DataSentEventHandler (Client instance, SocketAsyncEventArgs sendEvent);
         public event DataSentEventHandler DataSent;
 
         #endregion
@@ -46,30 +46,29 @@ namespace Emerald.Net.TCP.Client
 
         new public async void Connect (string host, int port)
         {
-            _endPoint = await BuildEndPoint(host, port);
+            var endPoint = await BuildEndPoint(host, port);
 
-            _receivedEvent = new SocketAsyncEventArgs
-            {
-                RemoteEndPoint = _endPoint,
-                UserToken = _socket
-            };
-            _receivedEvent.SetBuffer(ReceiveBuffer, 0, BufferSize);
-            _receivedEvent.Completed += OnReceived;
+            var receivedEvent = new SocketAsyncEventArgs();
+            receivedEvent.RemoteEndPoint = endPoint;
 
-            await _socket.ConnectAsync(_endPoint);
+            receivedEvent.SetBuffer(ReceiveBuffer, 0, BufferSize);
+            receivedEvent.Completed += OnReceive;
 
-            if (!_socket.ReceiveAsync(_receivedEvent))
-                OnReceived(_socket, _receivedEvent);
+            _sentEvent = new SocketAsyncEventArgs();
+            _sentEvent.RemoteEndPoint = endPoint;
+            _sentEvent.Completed += OnSend;
+
+            await this.ConnectAsync(endPoint);
+
+            ConnectedEvent?.Invoke(this);
+
+            if (!ReceiveAsync(receivedEvent))
+                ReceiveProcess(receivedEvent);
         }
 
         public void Stop ()
         {
-            _socket?.Shutdown(SocketShutdown.Both);
-        }
-
-        new public void Dispose ()
-        {
-            _socket.Dispose();
+            Shutdown(SocketShutdown.Both);
         }
 
         new public void Send (byte[] data)
@@ -77,42 +76,37 @@ namespace Emerald.Net.TCP.Client
             if (!Connected)
                 return;
 
-            lock (Sender)
-            {
-                _sentEvent = new SocketAsyncEventArgs
-                {
-                    RemoteEndPoint = _endPoint,
-                    UserToken = _socket
-                };
-                _sentEvent.SetBuffer(data, 0, data.Length);
-                _sentEvent.Completed += OnSent;
+            _sentEvent.SetBuffer(data, 0, data.Length);
 
-                if (!_socket.SendAsync(_sentEvent))
-                    OnSent(_socket, _sentEvent);
-            }
+            if (!SendAsync(_sentEvent))
+                    SendProcess(_sentEvent);
         }
 
         #endregion
 
         #region Protected Methods
 
-        protected virtual void OnReceived (object sender, SocketAsyncEventArgs e)
+        private void OnReceive (object sender, SocketAsyncEventArgs receiveEventArgs) => ReceiveProcess(receiveEventArgs);
+
+        protected virtual void ReceiveProcess (SocketAsyncEventArgs receiveEventArgs)
         {
-            do
+            if (!Connected) return;
+
+            if (receiveEventArgs.BytesTransferred > 0)
             {
-                if (!Connected)
-                    break;
-                byte[] data = new byte[e.BytesTransferred];
-                Array.Copy(e.Buffer, data, e.BytesTransferred);
-                DataReceived?.Invoke(data);
-            } while (!_socket.ReceiveAsync(e));
+                byte[] data = new byte[receiveEventArgs.BytesTransferred];
+                Array.Copy(receiveEventArgs.Buffer, data, receiveEventArgs.BytesTransferred);
+                DataReceived?.Invoke(this, data);
+            }
+
+            ReceiveAsync(receiveEventArgs);
         }
 
-        protected virtual void OnSent (object sender, SocketAsyncEventArgs e)
+        private void OnSend (object sender, SocketAsyncEventArgs sendEventArgs) => SendProcess(sendEventArgs);
+
+        protected virtual void SendProcess (SocketAsyncEventArgs sendEventArgs)
         {
-            byte[] data = new byte[e.BytesTransferred];
-            Array.Copy(e.Buffer, data, e.BytesTransferred);
-            DataSent?.Invoke(data);
+            DataSent?.Invoke(this, sendEventArgs);
         }
 
         #endregion
@@ -121,7 +115,6 @@ namespace Emerald.Net.TCP.Client
 
         private void Initialize ()
         {
-            _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             ReceiveBuffer = new byte[BufferSize];
         }
 
