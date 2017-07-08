@@ -7,8 +7,8 @@ namespace Emerald.Examples
     {
         private static void Main(string[] args)
         {
-            //var server = new Server();
-            var client = new Client();
+            var server = new Server();
+            //var client = new Client();
         }
     }
 }

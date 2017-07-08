@@ -14,7 +14,7 @@ namespace Emerald.Net.TCP.Client
         /** <summary> An SocketAsyncEventArgs used for receiving data. </summary> */
         private SocketAsyncEventArgs _sentEvent;
 
-        #endregion
+        #endregion Fields
 
         #region Properties
 
@@ -24,7 +24,7 @@ namespace Emerald.Net.TCP.Client
          */
         new public bool Connected => base.Connected && this.IsConnected();
 
-        #endregion
+        #endregion Properties
 
         #region Events
 
@@ -53,7 +53,7 @@ namespace Emerald.Net.TCP.Client
         public delegate void DataSentEventHandler (Client instance, SocketAsyncEventArgs sendEvent);
         public event DataSentEventHandler DataSent;
 
-        #endregion
+        #endregion Events
 
         #region Public Methods
 
@@ -92,12 +92,6 @@ namespace Emerald.Net.TCP.Client
                 ReceivedProcess(receivedEvent);
         }
 
-        /** <summary> Disconnect the client from distant host. </summary> */
-        public void Stop ()
-        {
-            Shutdown(SocketShutdown.Both);
-        }
-
         /**
          * <summary> Send data to distant host. </summary>
          *
@@ -116,7 +110,13 @@ namespace Emerald.Net.TCP.Client
                     SentProcess(_sentEvent);
         }
 
-        #endregion
+        /** <summary> Disconnect the client from distant host. </summary> */
+        public void Stop ()
+        {
+            Shutdown(SocketShutdown.Both);
+        }
+
+        #endregion Public Methods
 
         #region Private Methods
 
@@ -164,6 +164,6 @@ namespace Emerald.Net.TCP.Client
             DataSent?.Invoke(this, sendEventArgs);
         }
 
-        #endregion
+        #endregion Private Methods
     }
 }

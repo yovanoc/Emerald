@@ -17,7 +17,8 @@ namespace Emerald.Examples.Net.TCP.Server
 
             server.Listen(80);
 
-            while (Console.ReadLine() != "q") { /* Stay open. */ }
+            string input;
+            while ( (input = Console.ReadLine()) != "q") { server.Send(Encoding.ASCII.GetBytes(input)); }
         }
 
         private static void OnListening(Emerald.Net.TCP.Server.Server server)
@@ -26,14 +27,14 @@ namespace Emerald.Examples.Net.TCP.Server
             Console.WriteLine("Press 'q' to exit." + '\n');
         }
 
-        private static void OnClientConnected (Socket client)
+        private static void OnClientConnected (Emerald.Net.TCP.Server.Server server, Socket client)
         {
             Console.WriteLine($"[Server] > Client {client.RemoteEndPoint} joined.");
         }
 
-        private static void OnDataReceived (Socket client, byte[] data)
+        private static void OnDataReceived (Emerald.Net.TCP.Server.Server server, Socket client, byte[] data)
         {
             Console.WriteLine($"[Client:{client.RemoteEndPoint}] > {Encoding.ASCII.GetString(data)}");
-        }
+        }   
     }
 }
