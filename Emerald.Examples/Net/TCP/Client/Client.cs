@@ -1,6 +1,5 @@
-﻿using Emerald.Net.TCP.Core.Extensions;
-using System;
-using System.Collections.Generic;
+﻿using System;
+using System.Net.Sockets;
 using System.Text;
 
 namespace Emerald.Examples.Net.TCP.Client
@@ -12,23 +11,29 @@ namespace Emerald.Examples.Net.TCP.Client
             var client = new Emerald.Net.TCP.Client.Client();
 
             client.ConnectedEvent += OnConnectedEvent;
+            client.DataSent += OnDataSent;
             client.DataReceived += OnDataReceived;
 
             client.Connect("localhost", 80);
 
-            while (Console.ReadLine() != "q") { /* Stay open. */ }
+            string input;
+            while ( (input = Console.ReadLine()) != "q") { client.Send(Encoding.ASCII.GetBytes(input)); }
         }
-
-        public void OnConnectedEvent(Emerald.Net.TCP.Client.Client instance)
+        
+        public static void OnConnectedEvent(Emerald.Net.TCP.Client.Client instance)
         {
-            Console.WriteLine($"Connected to {instance.RemoteEndPoint} !");
+            Console.WriteLine("Press 'q' to exit." + '\n' +
+                $"Connected to {instance.RemoteEndPoint} !" + '\n');
         }
 
-        public void OnDataReceived(Emerald.Net.TCP.Client.Client instance, byte[] data)
+        public static void OnDataReceived(Emerald.Net.TCP.Client.Client instance, byte[] data)
         {
             Console.WriteLine($"[Server] > {Encoding.ASCII.GetString(data)}");
+        }
 
-            instance.Send(Encoding.ASCII.GetBytes("You sent: ").Add(data));
-;        }
+        public static void OnDataSent(Emerald.Net.TCP.Client.Client instance, SocketAsyncEventArgs socket)
+        {
+            Console.WriteLine($"[Client] > {socket.BytesTransferred} bytes were sent");
+        }
     }
 }
