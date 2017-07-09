@@ -18,15 +18,13 @@ namespace Emerald.Net.TCP.Server
         private readonly int _maxQueuedConnections;
         private readonly int _maxConnectedSockets;
 
-        private List<Socket> _connectedClient;
+        public readonly List<ClientSystem> ConnectedClients;
 
         /** <summary> Keep the Listen method under one thread. </summary> */
         private static Mutex _listenerMutex;
 
-        public int ConnectedClients;
-
         /** <summary> Contains several pre created SocketAsyncEventArgs instances </summary> */
-        private readonly SocketQueue _socketQueue;
+        public readonly SocketQueue SocketQueue;
 
         private readonly SocketAsyncEventArgs _sendEventArgs;
 
@@ -45,18 +43,26 @@ namespace Emerald.Net.TCP.Server
          * <summary> Delegate for handling ClientConnected events. </summary>
          * <param name="client"> The client. </param>
          */
-        public delegate void ClientConnectedEventHandler(Server server, Socket client);
+        public delegate void ClientConnectedEventHandler(Server server, ClientSystem client);
+        /**
+         * <summary>    Delegate for handling ClientDeconnected events. </summary>
+         * <param name="server">    The server hosting client. </param>
+         * <param name="client">    The disconnected client. </param>
+         */
+        public delegate void ClientDisconnectedEventHandler(Server server, ClientSystem client);
         /**
          * <summary> Delegate for handling DataReceived events. </summary>
          * <param name="client"> The data sender. </param>
          * <param name="data"> The received data. </param>
          */
-        public delegate void DataReceivedEventHandler(Server server, Socket client, byte[] data);
+        public delegate void DataReceivedEventHandler(Server server, ClientSystem client, byte[] data);
 
         /** <summary> Fired when server starts listening. </summary> */
         public event ListeningEventHandler Listening;
         /** <summary> Fired when a new client connects. </summary> */
         public event ClientConnectedEventHandler ClientConnected;
+        /** <summary> Fired when a client disconnect. </summary> */
+        public event ClientDisconnectedEventHandler ClientDisconnected;
         /** <summary> Fired when server receives data. </summary> */
         public event DataReceivedEventHandler DataReceived;
 
@@ -73,7 +79,7 @@ namespace Emerald.Net.TCP.Server
             // Create a new local end point and listen; ('this' is the listening socket).
             _endPoint = await BuildEndPoint("localhost", port);
             Bind(_endPoint);
-            base.Listen(_maxConnectedSockets);
+            base.Listen(_maxQueuedConnections);
 
             // Fire the listening event.
             Listening?.Invoke(this);
@@ -85,13 +91,12 @@ namespace Emerald.Net.TCP.Server
             _listenerMutex.WaitOne();
         }
 
-
-        public void Send(Socket client, byte[] data)
+        public void Send(ClientSystem client, byte[] data)
         {
             _sendEventArgs.SetBuffer(data, 0, data.Length);
 
-            if (!client.SendAsync(_sendEventArgs))
-                ProcessSent(_sendEventArgs);
+            if (!client.AcceptSocket.SendAsync(_sendEventArgs))
+                ProcessSent(client);
         }
 
         #endregion Public Methods  
@@ -101,8 +106,8 @@ namespace Emerald.Net.TCP.Server
         /** <summary> Fill the SocketQueue of SocketAsyncEventArgs up to his max capacity </summary> */
         private async void FillSocketQueue()
         {
-            for (var i = 0; i < _socketQueue.Capacity; i++)
-                _socketQueue.Push(await CreateReadSocket());
+            for (var i = 0; i < SocketQueue.Capacity; i++)
+                SocketQueue.Push(await CreateReadSocket());
         }
 
         /**
@@ -115,7 +120,6 @@ namespace Emerald.Net.TCP.Server
             return await Task.Run(() =>
             {
                 var socket = new SocketAsyncEventArgs();
-                socket.Completed += OnIOComplete;
                 socket.SetBuffer(CreateBuffer(), 0, BufferSize);
 
                 return socket;
@@ -152,35 +156,47 @@ namespace Emerald.Net.TCP.Server
             
             // Check if there is a client
             if (!acceptSocket.Connected) return;
-            var readSocketArg = _socketQueue.Pop();
+            var readSocketArg = SocketQueue.Pop();
 
             // If every socket in the SocketQueue is used, we can't host more clients.
             // TODO: Check if the client will make a new request after a certain time.
-            if (readSocketArg == null) return;
+
+            ClientSystem clientSystem = new ClientSystem(this, acceptSocket, readSocketArg);
+            clientSystem.ReadSocketArg.Completed += (object sender, SocketAsyncEventArgs eventArgs) => OnIOComplete(sender, clientSystem);
+
+            ConnectedClients.Add(clientSystem);
 
             // Fire the client connected event
-            ClientConnected?.Invoke(this, acceptSocket);
+            ClientConnected?.Invoke(this, clientSystem);
+            Console.WriteLine($"{ConnectedClients.Count} clients connected, { SocketQueue.Queued } free places.");
 
-            readSocketArg.UserToken = new UserToken(owner: acceptSocket);
             var isIOPending = acceptSocket.ReceiveAsync(readSocketArg);
 
             // If no data is being sent and/or everything was intercepted, we "extract" the data.
             // Otherwise, 
-            if (!isIOPending) ProcessReceive(readSocketArg);
+            if (!isIOPending) ProcessReceive(clientSystem);
             
             // And loop to accept new connections.
             Accept(acceptArgs);
         }
 
-        private void OnIOComplete(object sender, SocketAsyncEventArgs readSocketArgs) => ProcessReceive(readSocketArgs);
+        private void OnIOComplete(object sender, ClientSystem clientSystem) => ProcessReceive(clientSystem);
 
         /**
          * <summary> Called when the data is read, we just copy the buffer from the socketArgs, and send it to event. </summary>
          * <param name="readSocketArgs"> Where the data was received. </param>
          */
-        private void ProcessReceive(SocketAsyncEventArgs readSocketArgs)
+        private void ProcessReceive(ClientSystem client)
         {
-            var token = readSocketArgs.UserToken as UserToken;
+            // If client is no longer connected, proceed to clean closing.
+            if (!client.IsConnected)
+            {
+                client.Dispose();
+                ClientDisconnected?.Invoke(this, client);
+                return;
+            }
+
+            var readSocketArgs = client.ReadSocketArg;
             var bytecount = readSocketArgs.BytesTransferred;
 
             if (bytecount > 0 || readSocketArgs.SocketError == SocketError.Success)
@@ -188,14 +204,14 @@ namespace Emerald.Net.TCP.Server
                 byte[] data = new byte[bytecount];
                 Buffer.BlockCopy(readSocketArgs.Buffer, readSocketArgs.Offset, data, 0, bytecount);
 
-                DataReceived?.Invoke(this, token.OwnerSocket, data);
+                DataReceived?.Invoke(this, client, data);
             }
 
-            var isIOPending = token.OwnerSocket.ReceiveAsync(readSocketArgs);
-            if (!isIOPending) ProcessReceive(readSocketArgs);
+            var isIOPending = client.AcceptSocket.ReceiveAsync(readSocketArgs);
+            if (!isIOPending) ProcessReceive(client);
         }
 
-        private void ProcessSent(SocketAsyncEventArgs sendEventArgs)
+        private void ProcessSent(ClientSystem clientSystem)
         {
 
         }
@@ -208,9 +224,9 @@ namespace Emerald.Net.TCP.Server
         {
             _maxQueuedConnections = maxQueuedConnections;
             _maxConnectedSockets = maxConnectedSockets;
-            _connectedClient = new List<Socket>(maxConnectedSockets);
+            ConnectedClients = new List<ClientSystem>(maxConnectedSockets);
             _listenerMutex = new Mutex();
-            _socketQueue = new SocketQueue(maxQueuedConnections);
+            SocketQueue = new SocketQueue(maxConnectedSockets);
             _sendEventArgs = new SocketAsyncEventArgs();
 
             FillSocketQueue();
