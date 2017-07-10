@@ -1,14 +1,12 @@
-﻿using Emerald.Examples.Net.TCP.Client;
-using Emerald.Examples.Net.TCP.Server;
+﻿using System;
 
 namespace Emerald.Examples
 {
-    internal class Program
+    public class Program
     {
         private static void Main(string[] args)
         {
-            var server = new Server();
-            //var client = new Client();
+            Console.WriteLine("Hello World!");
         }
     }
 }

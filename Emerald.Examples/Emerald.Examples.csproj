@@ -6,12 +6,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Net\TCP\Core\**" />
-    <EmbeddedResource Remove="Net\TCP\Core\**" />
-    <None Remove="Net\TCP\Core\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Emerald\Emerald.csproj" />
   </ItemGroup>
 

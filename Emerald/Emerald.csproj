@@ -1,11 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp1.1</TargetFramework>
+    <TargetFramework>netstandard1.6</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Client\TCP\" />
+    <Reference Include="System.Net.NameResolution">
+      <HintPath>..\..\..\..\.nuget\packages\system.net.nameresolution\4.3.0\ref\netstandard1.3\System.Net.NameResolution.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

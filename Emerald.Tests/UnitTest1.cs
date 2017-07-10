@@ -1,3 +1,4 @@
+using System;
 using Xunit;
 
 namespace Emerald.Tests
@@ -7,7 +8,6 @@ namespace Emerald.Tests
         [Fact]
         public void Test1()
         {
-            Assert.Equal(1, 1 + 1);
         }
     }
 }

@@ -1,7 +1,6 @@
-﻿using Emerald.Net.TCP.Server;
-using System;
-using System.Net.Sockets;
+﻿using System;
 using System.Text;
+using Emerald.Net.TCP.Server;
 
 namespace Emerald.Examples.Net.TCP.Server
 {
@@ -21,31 +20,30 @@ namespace Emerald.Examples.Net.TCP.Server
 
             string input;
             while ((input = Console.ReadLine()) != "q")
-            {
-                        server.Send(server.ConnectedClients[int.Parse(input[0].ToString())],
-        Encoding.ASCII.GetBytes(input.Substring(2)));
-            }
+                server.Send(server.ConnectedClients[int.Parse(input[0].ToString())],
+                    Encoding.ASCII.GetBytes(input.Substring(2)));
         }
 
         private static void OnListening(Emerald.Net.TCP.Server.Server server)
         {
             Console.WriteLine($"Listening on {server.LocalEndPoint}");
-            Console.WriteLine("To send data to a client use the command '<ClientNumber> <Data>'\nPress 'q' to exit." + '\n');
+            Console.WriteLine("To send data to a client use the command '<ClientNumber> <Data>'\nPress 'q' to exit." +
+                              '\n');
         }
 
-        private static void OnClientConnected (Emerald.Net.TCP.Server.Server server, ClientSystem client)
+        private static void OnClientConnected(Emerald.Net.TCP.Server.Server server, ClientSystem client)
         {
             Console.WriteLine($"[Server] > Client {client.AcceptSocket.RemoteEndPoint} joined.");
         }
 
-        private static void OnClientDisconnected (Emerald.Net.TCP.Server.Server server, ClientSystem client)
+        private static void OnClientDisconnected(Emerald.Net.TCP.Server.Server server, ClientSystem client)
         {
             Console.WriteLine($"{client.RemoteEndPoint} have left.");
         }
 
-        private static void OnDataReceived (Emerald.Net.TCP.Server.Server server, ClientSystem client, byte[] data)
+        private static void OnDataReceived(Emerald.Net.TCP.Server.Server server, ClientSystem client, byte[] data)
         {
             Console.WriteLine($"[Client:{client.AcceptSocket.RemoteEndPoint}] > {Encoding.ASCII.GetString(data)}");
-        }   
+        }
     }
 }

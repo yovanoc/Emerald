@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Emerald.Examples.Net.TCP.Client
 {
-    class Client
+    public class Client
     {
         public Client()
         {
