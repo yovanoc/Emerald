@@ -5,9 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="System.Net.NameResolution">
-      <HintPath>..\..\..\..\.nuget\packages\system.net.nameresolution\4.3.0\ref\netstandard1.3\System.Net.NameResolution.dll</HintPath>
-    </Reference>
+    <PackageReference Include="System.Net.NameResolution" Version="4.3.0" />
   </ItemGroup>
 
 </Project>
