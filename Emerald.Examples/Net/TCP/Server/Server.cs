@@ -9,7 +9,7 @@ namespace Emerald.Examples.Net.TCP.Server
     {
         public Server()
         {
-            var server = new Emerald.Net.TCP.Server.Server(2);
+            var server = new Emerald.Net.TCP.Server.Server();
 
             server.Listening += OnListening;
             server.ClientConnected += OnClientConnected;

@@ -16,7 +16,6 @@ namespace Emerald.Net.TCP.Server
 
         /** <summary> The maximum connections waiting for being accepted. </summary> */
         private readonly int _maxQueuedConnections;
-        private readonly int _maxConnectedSockets;
 
         public readonly List<ClientSystem> ConnectedClients;
 
@@ -26,8 +25,11 @@ namespace Emerald.Net.TCP.Server
         /** <summary> Contains several pre created SocketAsyncEventArgs instances </summary> */
         public readonly SocketQueue SocketQueue;
 
+
+        /** <summary> The SocketAsyncEventArgs that handle data sending. </summary> */
         private readonly SocketAsyncEventArgs _sendEventArgs;
 
+        /** <summary> The "address" (port) where the server listen. </summary> */
         private IPEndPoint _endPoint;
 
         # endregion Fields
@@ -71,7 +73,7 @@ namespace Emerald.Net.TCP.Server
         #region Public Methods
 
         /**
-         * <summary> Make the server listen to new connections. </summary>
+         * <summary> Make the server listen for new connections. </summary>
          * <param name="port"> The listening port. </param>
          */
         public new async void Listen (int port)
@@ -91,10 +93,17 @@ namespace Emerald.Net.TCP.Server
             _listenerMutex.WaitOne();
         }
 
+        /**
+         * <summary> Send the given bytes to client. </summary>
+         *
+         * <param name="client"> The target client. </param>
+         * <param name="data">   The data to send. </param>
+         */
         public void Send(ClientSystem client, byte[] data)
         {
             _sendEventArgs.SetBuffer(data, 0, data.Length);
 
+            // If all data is send, process, else will be fired by AcceptSocket's callback.
             if (!client.AcceptSocket.SendAsync(_sendEventArgs))
                 ProcessSent(client);
         }
@@ -126,6 +135,10 @@ namespace Emerald.Net.TCP.Server
             });
         }
 
+        /**
+         * <summary> Creates a new SocketAsyncEventArgs that will handle incoming conenctions. </summary>
+         * <returns> The created SocketAsyncEventArgs. </returns>
+         */
         private SocketAsyncEventArgs CreateAcceptSocketArgs()
         {
             var socket = new SocketAsyncEventArgs();
@@ -134,6 +147,10 @@ namespace Emerald.Net.TCP.Server
             return socket;
         }
 
+        /**
+         * <summary> Let the listening socket accept new connection by using the given acceptArgs. </summary>
+         * <param name="acceptArgs"> The given acceptArgs that handle new connections. </param>
+         */
         private void Accept (SocketAsyncEventArgs acceptArgs)
         {
             // As Accept() is called by ProcessAccept() when data processing is done, making a sort of
@@ -147,8 +164,18 @@ namespace Emerald.Net.TCP.Server
             if (!isAcceptPending) ProcessAccept(acceptArgs);
         }
 
+        /**
+         * <summary> Fired by a SocketAsyncEventArgs when a connection is accepted. </summary>
+         *
+         * <param name="sender">     Source of the event. </param>
+         * <param name="acceptArgs"> The SocketAsyncEventArgs that handled the connection. </param>
+         */
         private void OnAcceptCompleted(object sender, SocketAsyncEventArgs acceptArgs) => ProcessAccept(acceptArgs);
 
+        /**
+         * <summary>                 Called when a new connection was accepted. </summary>
+         * <param name="acceptArgs"> The SocketAsyncEventArgs that accepted the new connection. </param>
+         */
         private void ProcessAccept(SocketAsyncEventArgs acceptArgs)
         {
             // Grab the socket from the async event arg.
@@ -180,6 +207,12 @@ namespace Emerald.Net.TCP.Server
             Accept(acceptArgs);
         }
 
+        /**
+         * <summary> Fired by a reader SocketAsyncEventArgs when data is read. </summary>
+         *
+         * <param name="sender">        Source of the event. </param>
+         * <param name="clientSystem">  The client system who sent the data. </param>
+         */
         private void OnIOComplete(object sender, ClientSystem clientSystem) => ProcessReceive(clientSystem);
 
         /**
@@ -206,24 +239,29 @@ namespace Emerald.Net.TCP.Server
 
                 DataReceived?.Invoke(this, client, data);
             }
-
+            
+            // Loop for new data
             var isIOPending = client.AcceptSocket.ReceiveAsync(readSocketArgs);
             if (!isIOPending) ProcessReceive(client);
         }
 
         private void ProcessSent(ClientSystem clientSystem)
         {
-
         }
 
         # endregion Private Methods
 
         # region Constructor
 
+        /**
+         * <summary> Create a new server. </summary>
+         *
+         * <param name="maxConnectedSockets">   The maximum connected sockets. </param>
+         * <param name="maxQueuedConnections">  The maximum connections waiting for being accepted. </param>
+         */
         public Server(int maxConnectedSockets, int maxQueuedConnections)
         {
             _maxQueuedConnections = maxQueuedConnections;
-            _maxConnectedSockets = maxConnectedSockets;
             ConnectedClients = new List<ClientSystem>(maxConnectedSockets);
             _listenerMutex = new Mutex();
             SocketQueue = new SocketQueue(maxConnectedSockets);

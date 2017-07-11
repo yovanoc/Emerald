@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Emerald.Examples.Net.TCP.Server;
+using System;
 
 namespace Emerald.Examples
 {
@@ -6,7 +7,7 @@ namespace Emerald.Examples
     {
         private static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            new Server();
         }
     }
 }
