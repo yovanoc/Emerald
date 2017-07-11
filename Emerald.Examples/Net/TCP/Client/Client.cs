@@ -10,7 +10,7 @@ namespace Emerald.Examples.Net.TCP.Client
         {
             var client = new Emerald.Net.TCP.Client.Client();
 
-            client.ConnectedEvent += OnConnectedEvent;
+            client.Connected += OnConnected;
             client.DataSent += OnDataSent;
             client.DataReceived += OnDataReceived;
 
@@ -20,7 +20,7 @@ namespace Emerald.Examples.Net.TCP.Client
             while ( (input = Console.ReadLine()) != "q") { client.Send(Encoding.ASCII.GetBytes(input)); }
         }
         
-        public static void OnConnectedEvent(Emerald.Net.TCP.Client.Client instance)
+        public static void OnConnected(Emerald.Net.TCP.Client.Client instance)
         {
             Console.WriteLine("Press 'q' to exit." + '\n' +
                 $"Connected to {instance.RemoteEndPoint} !" + '\n');

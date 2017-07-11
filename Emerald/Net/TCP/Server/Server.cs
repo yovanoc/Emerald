@@ -25,7 +25,6 @@ namespace Emerald.Net.TCP.Server
         /** <summary> Contains several pre created SocketAsyncEventArgs instances </summary> */
         public readonly SocketQueue SocketQueue;
 
-
         /** <summary> The SocketAsyncEventArgs that handle data sending. </summary> */
         private readonly SocketAsyncEventArgs _sendEventArgs;
 
@@ -36,36 +35,20 @@ namespace Emerald.Net.TCP.Server
 
         # region Events
 
-        /**
-         * <summary> Delegate for handling Listening events. </summary>
-         * <param name="server"> The listening server. </param>
-         */
-        public delegate void ListeningEventHandler(Server server);
-        /**
-         * <summary> Delegate for handling ClientConnected events. </summary>
-         * <param name="client"> The client. </param>
-         */
-        public delegate void ClientConnectedEventHandler(Server server, ClientSystem client);
-        /**
-         * <summary>    Delegate for handling ClientDeconnected events. </summary>
-         * <param name="server">    The server hosting client. </param>
-         * <param name="client">    The disconnected client. </param>
-         */
-        public delegate void ClientDisconnectedEventHandler(Server server, ClientSystem client);
-        /**
-         * <summary> Delegate for handling DataReceived events. </summary>
-         * <param name="client"> The data sender. </param>
-         * <param name="data"> The received data. </param>
-         */
-        public delegate void DataReceivedEventHandler(Server server, ClientSystem client, byte[] data);
-
         /** <summary> Fired when server starts listening. </summary> */
+        public delegate void ListeningEventHandler(Server server);
         public event ListeningEventHandler Listening;
+        
         /** <summary> Fired when a new client connects. </summary> */
+        public delegate void ClientConnectedEventHandler(Server server, ClientSystem client);
         public event ClientConnectedEventHandler ClientConnected;
+        
         /** <summary> Fired when a client disconnect. </summary> */
+        public delegate void ClientDisconnectedEventHandler(Server server, ClientSystem client);
         public event ClientDisconnectedEventHandler ClientDisconnected;
+
         /** <summary> Fired when server receives data. </summary> */
+        public delegate void DataReceivedEventHandler(Server server, ClientSystem client, byte[] data);
         public event DataReceivedEventHandler DataReceived;
 
         #endregion Events
@@ -104,8 +87,7 @@ namespace Emerald.Net.TCP.Server
             _sendEventArgs.SetBuffer(data, 0, data.Length);
 
             // If all data is send, process, else will be fired by AcceptSocket's callback.
-            if (!client.AcceptSocket.SendAsync(_sendEventArgs))
-                ProcessSent(client);
+            client.AcceptSocket.SendAsync(_sendEventArgs);
         }
 
         #endregion Public Methods  
@@ -245,9 +227,6 @@ namespace Emerald.Net.TCP.Server
             if (!isIOPending) ProcessReceive(client);
         }
 
-        private void ProcessSent(ClientSystem clientSystem)
-        {
-        }
 
         # endregion Private Methods
 

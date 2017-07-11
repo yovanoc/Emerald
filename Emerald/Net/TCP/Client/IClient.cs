@@ -10,22 +10,15 @@ namespace Emerald.Net.TCP.Client
         /// <returns></returns>
         void Connect (string host, int port);
 
-
-        /// <summary>
-        ///     Close the connection
-        /// </summary>
-        void Stop ();
-
-        /// <summary>
-        ///     Dispose all resources used by the client
-        /// </summary>
-        void Dispose ();
-
         /// <summary>
         ///     Send data to the server
         /// </summary>
         /// <param name="data"></param>
         void Send (byte[] data);
 
+        /// <summary>
+        ///     Close the connection
+        /// </summary>
+        void Stop ();
     }
 }

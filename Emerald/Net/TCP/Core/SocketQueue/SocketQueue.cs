@@ -4,9 +4,9 @@ using System.Net.Sockets;
 
 namespace Emerald.Net.TCP.Core.SocketQueue
 {
-    public class SocketQueue : ISocketQueue
+    public class SocketQueue : ISocketQueue, IDisposable
     {
-        # region Members
+        # region Fields
 
         /** <summary> The object that queues sockets. </summary> */
         private readonly ConcurrentQueue<SocketAsyncEventArgs> _socketQueue;
@@ -15,7 +15,7 @@ namespace Emerald.Net.TCP.Core.SocketQueue
 
         public int Queued => _socketQueue.Count;
 
-        # endregion Members
+        # endregion Fields
 
         #region Constructor
 
@@ -36,7 +36,7 @@ namespace Emerald.Net.TCP.Core.SocketQueue
 
         #endregion Constructor
 
-        # region Methods
+        # region Public Methods
 
         public bool Push(SocketAsyncEventArgs socket)
         {
@@ -55,11 +55,11 @@ namespace Emerald.Net.TCP.Core.SocketQueue
             return !_socketQueue.TryDequeue(out SocketAsyncEventArgs socket) ? null : socket;
         }
 
-        public void Clear()
+        public void Dispose()
         {
-            // TODO: Custom IDisposable interface.
+            // TODO
         }
 
-        # endregion Methods
+        # endregion Public Methods
     }
 }

@@ -3,5 +3,7 @@
     internal interface IServer
     {
         void Listen(int port);
+
+        void Send(ClientSystem client, byte[] data);
     }
 }

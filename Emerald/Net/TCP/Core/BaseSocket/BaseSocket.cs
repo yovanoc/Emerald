@@ -16,12 +16,12 @@ namespace Emerald.Net.TCP.Core.BaseSocket
 
         #endregion Constructor
 
-        # region Members
+        # region Fields
 
         /** <summary> Size of the buffer, 8k is a good size to go </summary> */
         protected const int BufferSize = 8000;
 
-        # endregion Members
+        # endregion Fields
 
         #region Methods
 

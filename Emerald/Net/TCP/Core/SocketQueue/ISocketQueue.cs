@@ -8,7 +8,7 @@ namespace Emerald.Net.TCP.Core.SocketQueue
      */
     internal interface ISocketQueue
     {
-        #region Methods
+        #region Public Methods
 
         /**
          * <summary> Pushes an socket onto the queue. </summary>
@@ -26,8 +26,8 @@ namespace Emerald.Net.TCP.Core.SocketQueue
         SocketAsyncEventArgs Pop();
 
         /** <summary> Clears the queue to its blank/initial state. </summary> */
-        void Clear();
+        void Dispose();
 
-        # endregion Methods
+        # endregion Public Methods
     }
 }

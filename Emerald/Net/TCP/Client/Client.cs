@@ -22,7 +22,7 @@ namespace Emerald.Net.TCP.Client
          * <summary> Test if the instance is connected to any host. </summary>
          * <value>  True if connected, false if not. </value>
          */
-        new public bool Connected => base.Connected && this.IsConnected();
+        public bool IsConnected => base.Connected && this.IsConnected();
 
         #endregion Properties
 
@@ -33,7 +33,7 @@ namespace Emerald.Net.TCP.Client
          * <param name="instance"> The listening socket. </param>
          */
         public delegate void ConnectedEventHandler (Client instance);
-        public event ConnectedEventHandler ConnectedEvent;
+        new public event ConnectedEventHandler Connected;
 
         /**
          * <summary> Fired when data is received. </summary>
@@ -57,12 +57,6 @@ namespace Emerald.Net.TCP.Client
 
         #region Public Methods
 
-        /**
-         * <summary> Start the connection to a distant host. </summary>
-         *
-         * <param name="host">  The host to connect. </param>
-         * <param name="port">  The port. </param>
-         */
         new public async void Connect (string host, int port)
         {
             // Used as an link to distant host.
@@ -84,7 +78,7 @@ namespace Emerald.Net.TCP.Client
             await this.ConnectAsync(endPoint);
 
             // Fire the connection event.
-            ConnectedEvent?.Invoke(this);
+            Connected?.Invoke(this);
 
             // If no receiving process is pending handle received data
             // otherwise, the handler will be called by the receiveEvent's callback.
@@ -92,14 +86,9 @@ namespace Emerald.Net.TCP.Client
                 ReceivedProcess(receivedEvent);
         }
 
-        /**
-         * <summary> Send data to distant host. </summary>
-         *
-         * <param name="data"> The data to send. </param>
-         */
         new public void Send (byte[] data)
         {
-            if (!Connected)
+            if (!IsConnected)
                 return;
 
             _sentEvent.SetBuffer(data, 0, data.Length);
@@ -110,7 +99,6 @@ namespace Emerald.Net.TCP.Client
                     SentProcess(_sentEvent);
         }
 
-        /** <summary> Disconnect the client from distant host. </summary> */
         public void Stop ()
         {
             Shutdown(SocketShutdown.Both);
@@ -134,7 +122,7 @@ namespace Emerald.Net.TCP.Client
          */
         private void ReceivedProcess (SocketAsyncEventArgs receiveEventArgs)
         {
-            if (!Connected) return;
+            if (!IsConnected) return;
 
             // Fire the event with a cropped byte array, that contains the received data.
             if (receiveEventArgs.BytesTransferred > 0)
