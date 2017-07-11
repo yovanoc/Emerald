@@ -11,11 +11,15 @@ namespace Emerald.Net.TCP.Core.SocketQueue
         /** <summary> The object that queues sockets. </summary> */
         private readonly ConcurrentQueue<SocketAsyncEventArgs> _socketQueue;
 
+        #endregion Fields
+
+        #region Properties
+
         public int Capacity { get; }
 
         public int Queued => _socketQueue.Count;
 
-        # endregion Fields
+        #endregion Properties
 
         #region Constructor
 
