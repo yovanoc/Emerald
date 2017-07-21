@@ -15,8 +15,11 @@ namespace Emerald.Examples.Net.TCP.Server
             server.ClientConnected += OnClientConnected;
             server.ClientDisconnected += OnClientDisconnected;
             server.DataReceived += OnDataReceived;
-
-            server.Listen(80);
+            
+            // You can't bind to ports < 1024 without administrative privileges.
+            // Use a port >= 1024 for this purpose. This is a general restriction - you would encounter
+            // the same problem on any application if running as an ordinary user in most operating systems.
+            server.Listen(1234);
 
             string input;
             while ((input = Console.ReadLine()) != "q")

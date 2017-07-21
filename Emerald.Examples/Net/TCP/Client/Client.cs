@@ -14,7 +14,7 @@ namespace Emerald.Examples.Net.TCP.Client
             client.DataSent += OnDataSent;
             client.DataReceived += OnDataReceived;
 
-            client.Connect("localhost", 80);
+            client.Connect("localhost", 1234);
 
             string input;
             while ( (input = Console.ReadLine()) != "q") { client.Send(Encoding.ASCII.GetBytes(input)); }

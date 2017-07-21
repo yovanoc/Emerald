@@ -1,5 +1,4 @@
 ﻿using Emerald.Examples.Net.TCP.Server;
-using System;
 
 namespace Emerald.Examples
 {
@@ -7,7 +6,7 @@ namespace Emerald.Examples
     {
         private static void Main(string[] args)
         {
-            new Server();
+            var server = new Server();
         }
     }
 }
